@@ -67,6 +67,40 @@ def process_function_def(
     return schema
 
 
+def filter_by_patterns(
+    name: str,
+    include_patterns: typing.Optional[typing.List[str]] = None,
+    exclude_patterns: typing.Optional[typing.List[str]] = None,
+):
+    """
+    Decide if a name should be included, given a set of include/exclude patterns. These are unix-like patterns,
+    implemented with Python's fnmatch https://docs.python.org/3/library/fnmatch.html.
+
+    Exclude patterns override include ones.
+
+    :param name: The name to be filtered
+    :param include_patterns: A list of wildcard patterns to match the name you want to include
+    :param exclude_patterns: A list of wildcard patterns to match the name you want to exclude
+    :return: True if it should be included, False otherwise
+    """
+
+    def _is_a_pattern(patterns: typing.List[str]):
+        for pattern in patterns:
+            if fnmatch.fnmatch(name, pattern):
+                return True
+        return False
+
+    is_included = True
+    is_excluded = False
+    if include_patterns:
+        is_included = _is_a_pattern(include_patterns)
+    if exclude_patterns:
+        is_excluded = _is_a_pattern(exclude_patterns)
+    if is_excluded or not is_included:
+        return False
+    return True
+
+
 def process_file(
     file_path: str,
     include_patterns: typing.Optional[typing.List[str]] = None,
@@ -75,8 +109,7 @@ def process_file(
     """
     Process a python file and return all json schemas from the top level functions it can find.
 
-    You can use optional include/exclude patterns to filter the functions you want to process, with the exclude pattern
-    overriding the include pattern. This patterns are implemented using Python package fnmatch.
+    You can use optional include/exclude patterns to filter the functions you want to process.
 
     :param file_path: The path to the file
     :param include_patterns: A list of wildcard patterns to match the function names you want to include
@@ -89,21 +122,8 @@ def process_file(
     typing_namespace = init_typing_namespace()
     function_schema_map = {}
 
-    def _is_a_pattern(name: str, patterns: typing.List[str]):
-        for pattern in patterns:
-            if fnmatch.fnmatch(name, pattern):
-                return True
-        else:
-            return False
-
     def _process_function(ast_function_def: ast.FunctionDef):
-        is_included = True
-        is_excluded = False
-        if include_patterns is not None:
-            is_included = _is_a_pattern(ast_function_def.name, include_patterns)
-        if exclude_patterns is not None:
-            is_excluded = _is_a_pattern(ast_function_def.name, exclude_patterns)
-        if is_excluded or not is_included:
+        if not filter_by_patterns(ast_function_def.name, include_patterns, exclude_patterns):
             LOGGER.info(f"Function {ast_function_def.name} skipped")
         else:
             function_schema_map[ast_function_def.name] = process_function_def(
@@ -132,8 +152,8 @@ def process_package(
     """
     Recursively process a package source folder and return all json schemas from the top level functions it can find.
 
-    You can use optional include/exclude patterns to filter the functions you want to process, with the exclude pattern
-    overriding the include pattern. This patterns are implemented using Python package fnmatch.
+    You can use optional include/exclude patterns to filter the functions you want to process. These patterns are also
+    applied to the file names that are processed, with the exception of __init__.py, which is always processed.
 
     :param package_path: The path to the your python package
     :param include_patterns: A list of wildcard patterns to match the function names you want to include
@@ -152,6 +172,8 @@ def process_package(
                 package_chain = package_chain.replace(os.path.sep, ".")
                 if file != "__init__.py":
                     package_chain = f"{package_chain}.{os.path.splitext(file)[0]}"
+                    if not filter_by_patterns(file, include_patterns, exclude_patterns):
+                        continue
                 function_schema_map.update(
                     **{
                         f"{package_chain}.{func_name}": func_schema

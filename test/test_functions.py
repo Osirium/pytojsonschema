@@ -6,7 +6,7 @@ import tempfile
 import pytest
 
 from pytojsonschema.common import init_schema_map, InvalidTypeAnnotation
-from pytojsonschema.functions import process_function_def, process_file, process_package
+from pytojsonschema.functions import filter_by_patterns, process_function_def, process_file, process_package
 
 from .conftest import assert_expected, TEST_TYPING_NAMESPACE
 
@@ -90,35 +90,55 @@ def test_process_function_def(ast_function_def, typing_namespace, schema_map, ex
 
 
 @pytest.mark.parametrize(
-    "file_contents, include_patterns, exclude_patterns, expected",
+    "name, include_patterns, exclude_patterns, expected",
     [
-        [
-            "import typing\n\n\ndef foo(a: int): pass\n\n\neval(3)",
-            None,
-            None,
-            {
-                "foo": {
-                    "$schema": "http://json-schema.org/draft-07/schema#",
-                    "type": "object",
-                    "properties": {"a": {"type": "integer"}},
-                    "required": ["a"],
-                    "additionalProperties": False,
-                }
-            },
-        ],
-        ["import typing\n\n\ndef foo(a: int): pass\n\n\neval(3)", ["_*"], None, {}],
-        ["import typing\n\n\ndef foo(a: int): pass\n\n\neval(3)", ["*"], ["foo"], {}],
+        ["foo", None, None, True],
+        ["foo", ["bar*"], None, False],
+        ["foo", ["foo*"], None, True],
+        ["foo", None, ["bar*"], True],
+        ["foo", None, ["foo*"], False],
+        ["foo", ["foo*"], ["bar*"], True],
+        ["foo", ["foo*"], ["foo*"], False],
     ],
-    ids=["no_patterns", "include_missing", "exclude_overwrites"],
+    ids=[
+        "no_patterns",
+        "include_miss",
+        "include_finds",
+        "exclude_miss",
+        "exclude_finds",
+        "exclude_override_miss",
+        "exclude_override_finds",
+    ],
 )
-def test_process_file(file_contents, include_patterns, exclude_patterns, expected):
+def test_filter_by_patterns(name, include_patterns, exclude_patterns, expected):
+    assert filter_by_patterns(name, include_patterns, exclude_patterns) == expected
+
+
+def test_process_file():
     with tempfile.NamedTemporaryFile("w") as f:
-        f.write(file_contents)
+        f.write("import typing\n\n\ndef foo(a: int): pass\n\n\ndef bar(b: int): pass\n\n\neval(3)")
         f.flush()
-        assert process_file(f.name, include_patterns, exclude_patterns) == expected
+        assert process_file(f.name, None, ["bar*"]) == {
+            "foo": {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {"a": {"type": "integer"}},
+                "required": ["a"],
+                "additionalProperties": False,
+            }
+        }
 
 
 def test_process_package():
+    init_schema = {
+        "example.version": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": False,
+            "properties": {},
+            "required": [],
+            "type": "object",
+        }
+    }
     expected = {
         "example.service.start": {
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -160,15 +180,10 @@ def test_process_package():
             "required": [],
             "type": "object",
         },
-        "example.version": {
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "additionalProperties": False,
-            "properties": {},
-            "required": [],
-            "type": "object",
-        },
     }
+    expected.update(init_schema)
     assert process_package(os.path.join("test", "example")) == expected
+    assert process_package(os.path.join("test", "example"), exclude_patterns=["service*"]) == init_schema
     current_dir = os.getcwd()
     os.chdir("test")
     try:
