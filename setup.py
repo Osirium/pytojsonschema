@@ -10,11 +10,11 @@ TEST_DEPENDENCIES = [
 setup(
     name="pytojsonschema",
     description="A package to convert Python type annotations into JSON schemas",
-    version="1.0.0",
+    version="1.0.1",
     author="Osirium",
     author_email="support@osirium.com",
     maintainer="Carlos Ruiz Lantero",
-    maintainer_email="carlos.ruiz.lantero@osirium.com",
+    maintainer_email="carlos.ruiz.lantero@gmail.com",
     url="https://github.com/Osirium/pytojsonschema",
     packages=["pytojsonschema"],
     classifiers=[
