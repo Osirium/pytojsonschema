@@ -1,3 +1,4 @@
+import os
 from setuptools import setup
 
 TEST_DEPENDENCIES = [
@@ -7,10 +8,15 @@ TEST_DEPENDENCIES = [
     "pytest-cov==2.8.1",
 ]
 
+with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), "README.md"), encoding="utf-8") as f:
+    LONG_DESCRIPTION = f.read()
+
 setup(
     name="pytojsonschema",
     description="A package to convert Python type annotations into JSON schemas",
-    version="1.0.1",
+    long_description=LONG_DESCRIPTION,
+    long_description_content_type='text/markdown',
+    version="1.0.2",
     author="Osirium",
     author_email="support@osirium.com",
     maintainer="Carlos Ruiz Lantero",
