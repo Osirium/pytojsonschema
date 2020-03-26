@@ -11,13 +11,13 @@ This allows you to auto-generate the validation schemas for JSON-RPC backend fun
 
 Current support is for Python 3.8+ and JSON schema draft 7+.
 
-### Getting started
+## Getting started
 
-##### Installation
+#### Installation
 
 From a Python 3.8+ environment, run `pip install pytojsonschema`.
 
-##### Scan a package
+#### Scan a package
 
 After installing the package, you can open a python terminal from the root of the repo and run:
 
@@ -32,7 +32,7 @@ pprint.pprint(process_package(os.path.join("test", "example")))
 
 The example package will be scanned and JSON schemas will be generated for all the top level functions it can find.
   
-##### Scan a file
+#### Scan a file
 
 You can also target specific files, which won't include the package namespacing in the result value.
 Following on the same terminal:
@@ -43,7 +43,7 @@ from pytojsonschema.functions import process_file
 pprint.pprint(process_file(os.path.join("test", "example", "service.py")))
 ```
 
-##### Include and exclude patterns
+#### Include and exclude patterns
 
 Include and exclude unix-like patterns can be used to filter function and module names we want to allow/disallow for 
 scanning. See the difference when you now run this instead:
@@ -63,21 +63,21 @@ Things to take into account:
 - `__init__.py` files are not affected by pattern rules and are always scanned. However, you can still filter its
   internal functions.
 
-### Type annotation rules
+## Type annotation rules
 
 Fitting Python's typing model to JSON means not everything is allowed in your function signatures.
 This is a natural restriction that comes with JSON data serialization. Hopefully, most of the useful stuff you need is
 allowed.
 
-##### Allowed types
+#### Allowed types
 
-###### Base types
+##### Base types
 
 Basic types `bool`, `int`, `float`, `str`, `None` and `typing.Any` are allowed. Also, you can build more complex, nested
 structures with the usage of `typing.Union`, `typing.Optional`, `typing.Dict` (Only `str` keys are allowed) and
 `typing.List`. All these types have a direct, non-ambiguous representation in both JSON and JSON schema.
 
-###### Custom types
+##### Custom types
 
 Your functions can also use custom types like the ones defined using an assignment of `typing.Union`, `typing.List`, 
 `typing.Dict` and `typing.Optional`, as in:
@@ -99,7 +99,7 @@ class Service(typing.TypedDict):
     debug: bool
 ```
 
-###### Importing types from other files
+##### Importing types from other files
 
 You can import these custom types within your package and they will be picked up. However, due to the static nature of
 the scan, custom types coming from external packages can't be followed and hence not supported. In other words, you can
@@ -118,7 +118,10 @@ scope for a tiny project like this, at least for now.
 3. Function arguments are meant to be passed in key-value format, like a json object. This puts a couple of restrictions
    regarding *args, **kwargs, positional-only and keyword-only arguments:
    
-   - :heavy_check_mark: **kwargs `def func(**kwargs): pass` are valid.
-   - :heavy_check_mark: keyword-only arguments `def func(*, a): pass` are valid.
-   - :x: *args `def func(*args): pass` are not valid.
-   - :x: positional-only arguments `def func(a, /): pass` are not valid.
+   The following is allowed:
+   - ****kwargs**: `def func(**kwargs): pass`
+   - **keyword-only arguments**: `def func(*, a): pass`
+   
+   The following is not allowed:
+   - ***args**: `def func(*args): pass`
+   - **positional-only arguments**: `def func(a, /): pass`
