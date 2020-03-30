@@ -173,6 +173,7 @@ def process_package(
                 if file != "__init__.py":
                     package_chain = f"{package_chain}.{os.path.splitext(file)[0]}"
                     if not filter_by_patterns(file, include_patterns, exclude_patterns):
+                        LOGGER.info(f"Module {file} skipped")
                         continue
                 function_schema_map.update(
                     **{

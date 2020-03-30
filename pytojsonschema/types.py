@@ -1,5 +1,4 @@
 import ast
-import logging
 import os
 import typing
 
@@ -25,8 +24,6 @@ ANY_SCHEMA = {
         {"type": "number"},
     ]
 }
-
-LOGGER = logging.getLogger()
 
 
 def process_alias(ast_alias: ast.alias) -> str:
@@ -132,7 +129,6 @@ def process_class_def(
     if ast_class_def.bases and get_ast_name_or_attribute_string(ast_class_def.bases[0]) in typing_namespace.get(
         "TypedDict", set()
     ):
-        LOGGER.info(f"Processing type {ast_class_def.name} ...")
         properties = {}
         for index, node in enumerate(ast_class_def.body):
             if isinstance(node, ast.AnnAssign):
@@ -171,7 +167,6 @@ def process_assign(ast_assign: ast.Assign, typing_namespace: TypingNamespace, sc
             for item in values
         )
     ):
-        LOGGER.info(f"Processing type {ast_assign.targets[0].id} ...")
         schema_map[ast_assign.targets[0].id] = get_json_schema_from_ast_element(
             ast_assign.value, typing_namespace, schema_map
         )
