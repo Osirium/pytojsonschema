@@ -149,6 +149,17 @@ def package_iterator(
     include_patterns: typing.Optional[typing.List[str]] = None,
     exclude_patterns: typing.Optional[typing.List[str]] = None,
 ) -> typing.Generator[typing.Tuple[str, str], None, None]:
+    """
+    Recursively process a package source folder and return the import path prefix and the module file path.
+
+    You can use optional include/exclude patterns to filter the functions you want to process. These patterns are also
+    applied to the file names that are processed, with the exception of __init__.py, which is always processed.
+
+    :param package_path: The path to the your python package
+    :param include_patterns: A list of wildcard patterns to match the function names you want to include
+    :param exclude_patterns: A list of wildcard patterns to match the function names you want to exclude
+    :yield: A tuple containing the module import path and the module file path
+    """
     norm_package_path = os.path.normpath(package_path)
     path_prefix = os.path.split(norm_package_path)[0]
     for root, _, files in os.walk(norm_package_path, topdown=True):
