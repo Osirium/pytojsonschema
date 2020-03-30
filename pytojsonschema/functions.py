@@ -144,6 +144,28 @@ def process_file(
     return function_schema_map
 
 
+def package_iterator(
+    package_path: str,
+    include_patterns: typing.Optional[typing.List[str]] = None,
+    exclude_patterns: typing.Optional[typing.List[str]] = None,
+) -> typing.Generator[typing.Tuple[str, str], None, None]:
+    norm_package_path = os.path.normpath(package_path)
+    path_prefix = os.path.split(norm_package_path)[0]
+    for root, _, files in os.walk(norm_package_path, topdown=True):
+        for file in files:
+            if file.endswith(".py"):
+                package_chain = root.replace(path_prefix, "", 1)
+                if package_chain.startswith("/"):
+                    package_chain = package_chain.replace("/", "", 1)
+                package_chain = package_chain.replace(os.path.sep, ".")
+                if file != "__init__.py":
+                    package_chain = f"{package_chain}.{os.path.splitext(file)[0]}"
+                    if not filter_by_patterns(file, include_patterns, exclude_patterns):
+                        LOGGER.info(f"Module {file} skipped")
+                        continue
+                yield package_chain, os.path.join(root, file)
+
+
 def process_package(
     package_path: str,
     include_patterns: typing.Optional[typing.List[str]] = None,
@@ -160,27 +182,14 @@ def process_package(
     :param exclude_patterns: A list of wildcard patterns to match the function names you want to exclude
     :return: A dictionary containing your function names and their json schemas
     """
-    norm_package_path = os.path.normpath(package_path)
-    path_prefix = os.path.split(norm_package_path)[0]
     function_schema_map = {}
-    for root, _, files in os.walk(norm_package_path, topdown=True):
-        for file in files:
-            if file.endswith(".py"):
-                package_chain = root.replace(path_prefix, "", 1)
-                if package_chain.startswith("/"):
-                    package_chain = package_chain.replace("/", "", 1)
-                package_chain = package_chain.replace(os.path.sep, ".")
-                if file != "__init__.py":
-                    package_chain = f"{package_chain}.{os.path.splitext(file)[0]}"
-                    if not filter_by_patterns(file, include_patterns, exclude_patterns):
-                        LOGGER.info(f"Module {file} skipped")
-                        continue
-                function_schema_map.update(
-                    **{
-                        f"{package_chain}.{func_name}": func_schema
-                        for func_name, func_schema in process_file(
-                            os.path.join(root, file), include_patterns, exclude_patterns
-                        ).items()
-                    }
-                )
+    for package_chain, package_file_path in package_iterator(package_path, include_patterns, exclude_patterns):
+        function_schema_map.update(
+            **{
+                f"{package_chain}.{func_name}": func_schema
+                for func_name, func_schema in process_file(
+                    package_file_path, include_patterns, exclude_patterns
+                ).items()
+            }
+        )
     return function_schema_map
