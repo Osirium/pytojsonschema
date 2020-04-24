@@ -13,6 +13,7 @@ def test_init_typing_namespace():
         "Optional": set(),
         "Any": set(),
         "TypedDict": set(),
+        "Enum": set(),
     }
 
 

@@ -40,6 +40,7 @@ def test_process_alias(alias_object, expected):
                     "Optional": {"foo.Optional"},
                     "Any": {"foo.Any"},
                     "TypedDict": {"foo.TypedDict"},
+                    "Enum": set(),
                 },
                 dict(
                     init_schema_map(),
@@ -62,7 +63,15 @@ def test_process_alias(alias_object, expected):
         [
             ast.parse("import os").body[0],
             (
-                {"Union": set(), "List": set(), "Dict": set(), "Optional": set(), "Any": set(), "TypedDict": set()},
+                {
+                    "Union": set(),
+                    "List": set(),
+                    "Dict": set(),
+                    "Optional": set(),
+                    "Any": set(),
+                    "TypedDict": set(),
+                    "Enum": set(),
+                },
                 init_schema_map(),
             ),
         ],

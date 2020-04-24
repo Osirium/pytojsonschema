@@ -10,6 +10,8 @@ BASE_SCHEMA_MAP = {
 }
 VALID_TYPING_AST_SUBSCRIPT_TYPES = frozenset({"Union", "List", "Dict", "Optional"})
 VALID_TYPING_TYPES = VALID_TYPING_AST_SUBSCRIPT_TYPES | frozenset({"TypedDict", "Any"})
+VALID_ENUM_TYPES = frozenset({"Enum"})
+VALID_TYPES = VALID_TYPING_TYPES | VALID_ENUM_TYPES
 
 TypeNamespace = typing.Dict[str, typing.Set[str]]
 Schema = typing.Dict[str, typing.Any]
@@ -27,7 +29,7 @@ def init_typing_namespace() -> TypeNamespace:
 
     :return: A TypeNamespace object
     """
-    return {valid_type: set() for valid_type in VALID_TYPING_TYPES}
+    return {valid_type: set() for valid_type in VALID_TYPES}
 
 
 def init_schema_map() -> SchemaMap:
