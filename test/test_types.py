@@ -122,6 +122,7 @@ def test_process_assign(ast_assign, type_namespace, schema_map, expected):
     "ast_class_def, type_namespace, schema_map, expected",
     [
         [ast.parse("class Foo: pass").body[0], init_typing_namespace(), init_schema_map(), init_schema_map()],
+        [ast.parse("class Foo(bar): pass").body[0], init_typing_namespace(), init_schema_map(), init_schema_map()],
         [
             ast.parse(
                 """class Car(typing.TypedDict):
@@ -143,8 +144,38 @@ def test_process_assign(ast_assign, type_namespace, schema_map, expected):
                 },
             ),
         ],
+        [
+            ast.parse(
+                """class Color(enum.Enum):
+    '''Some docstring'''
+    red = 'red'
+    blue = 'blue'"""
+            ).body[0],
+            dict(init_typing_namespace(), **{"Enum": {"enum.Enum"}}),
+            init_schema_map(),
+            dict(
+                init_schema_map(),
+                **{
+                    "Color": {
+                        "type": "string",
+                        "enum": ["red", "blue"]
+                    }
+                },
+            ),
+        ],
+        [
+            ast.parse(
+                """class Number(enum.Enum):
+    '''Some docstring'''
+    three = 3
+    four = 4"""
+            ).body[0],
+            dict(init_typing_namespace(), **{"Enum": {"enum.Enum"}}),
+            init_schema_map(),
+            init_schema_map(),
+        ],
     ],
-    ids=["not_typed_dict", "typed_dict"],
+    ids=["not_typed_dict_nor_enum", "not_typed_dict_nor_enum_with_base_class", "typed_dict", "enum", "enum_bad_types"],
 )
 def test_process_class_def(ast_class_def, type_namespace, schema_map, expected):
     process_class_def(ast_class_def, type_namespace, schema_map)

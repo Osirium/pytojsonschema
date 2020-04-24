@@ -87,7 +87,7 @@ ServicePort = typing.Union[int, float]
 ServiceConfig = typing.Dict[str, typing.Any]
 ```
 
-You can also use one of the new Python 3.8 features, `typing.TypedDict`, to build stronger validation on dict-like
+You can use one of the new Python 3.8 features, `typing.TypedDict`, to build stronger validation on dict-like
 objects (Only class-based syntax). As you can see, you can chain types with no restrictions:
 
 ```python
@@ -98,6 +98,27 @@ class Service(typing.TypedDict):
     tags: typing.List[str]
     debug: bool
 ```
+
+Also, if you need to restrict the choices for a string type, you can use Python enums:
+
+```python
+import enum
+
+
+class HTTPMethod(enum.Enum):
+    GET = "GET"
+    POST = "POST"
+    PATCH = "PATCH"
+    DELETE = "DELETE"
+
+
+def my_func(http_method: HTTPMethod):
+    pass  # My code
+```
+
+_Note 1: This only works for enums whose values are strings, as that is the only case JSON schema supports_
+
+_Note 2: The resulting validation uses the enum values as the valid choices, as that is what JSON schema can understand_
 
 ##### Importing types from other files
 
