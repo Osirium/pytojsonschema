@@ -10,6 +10,7 @@ from .common import (
     init_typing_namespace,
     VALID_TYPING_AST_SUBSCRIPT_TYPES,
     VALID_TYPING_TYPES,
+    VALID_ENUM_TYPES,
 )
 from .jsonschema import get_json_schema_from_ast_element
 
@@ -50,13 +51,17 @@ def process_import(ast_import: ast.Import, type_namespace: TypeNamespace, schema
     :param schema_map: The current schema map to be updated
     """
     for import_name in ast_import.names:
+        module_element = process_alias(import_name)
         if import_name.name == "typing":
-            module_element = process_alias(import_name)
             for valid_type in VALID_TYPING_TYPES:
                 element = f"{module_element}.{valid_type}"
                 type_namespace[valid_type].add(element)
                 if valid_type == "Any":
                     schema_map[element] = ANY_SCHEMA
+        elif import_name.name == "enum":
+            for valid_type in VALID_ENUM_TYPES:
+                element = f"{module_element}.{valid_type}"
+                type_namespace[valid_type].add(element)
 
 
 def process_import_from(
@@ -73,16 +78,20 @@ def process_import_from(
     :param type_namespace: The current typing namespace to be updated
     :param schema_map: The current schema map to be updated
     """
-    # Level == 0 are absolute imports. We only follow the one that targets typing
-    if ast_import_from.level == 0 and ast_import_from.module == "typing":
+    # Level == 0 are absolute imports. We only follow the ones that targets typing or enum
+    if ast_import_from.level == 0:
         for import_name in ast_import_from.names:
-            if import_name.name in VALID_TYPING_TYPES:
-                element = process_alias(import_name)
-                type_namespace[import_name.name].add(element)
-                if import_name.name == "Any":
-                    schema_map[element] = ANY_SCHEMA
+            element = process_alias(import_name)
+            if ast_import_from.module == "typing":
+                if import_name.name in VALID_TYPING_TYPES:
+                    type_namespace[import_name.name].add(element)
+                    if import_name.name == "Any":
+                        schema_map[element] = ANY_SCHEMA
+            elif ast_import_from.module == "enum":
+                if import_name.name in VALID_ENUM_TYPES:
+                    type_namespace[import_name.name].add(element)
     # Level >= 1 are relative imports. 1 is the current directory, 2 the parent, 3 the grandparent, and so on.
-    elif ast_import_from.level >= 1:
+    else:
         module = f"{ast_import_from.module}.py" if ast_import_from.module else "__init__.py"
         new_base_path = base_path
         for _ in range(ast_import_from.level - 1):

@@ -61,6 +61,21 @@ def test_process_alias(alias_object, expected):
             ),
         ],
         [
+            ast.parse("import enum").body[0],
+            (
+                {
+                    "Union": set(),
+                    "List": set(),
+                    "Dict": set(),
+                    "Optional": set(),
+                    "Any": set(),
+                    "TypedDict": set(),
+                    "Enum": {"enum.Enum"},
+                },
+                init_schema_map(),
+            ),
+        ],
+        [
             ast.parse("import os").body[0],
             (
                 {
@@ -76,7 +91,7 @@ def test_process_alias(alias_object, expected):
             ),
         ],
     ],
-    ids=["typing", "no_typing"],
+    ids=["typing", "enum", "no_typing_nor_enum"],
 )
 def test_process_import(ast_import, expected):
     type_namespace, schema_map = init_typing_namespace(), init_schema_map()
@@ -145,14 +160,20 @@ def test_process_class_def(ast_class_def, type_namespace, schema_map, expected):
             (dict(init_typing_namespace(), **{"Any": {"Any"}}), dict(init_schema_map(), **{"Any": ANY_SCHEMA})),
         ],
         [
+            ast.parse("from enum import Enum").body[0],
+            ".",
+            (dict(init_typing_namespace(), **{"Enum": {"Enum"}}), init_schema_map()),
+        ],
+        [
             ast.parse("from typing import Union").body[0],
             ".",
             (dict(init_typing_namespace(), **{"Union": {"Union"}}), init_schema_map()),
         ],
+        [ast.parse("from enum import foo").body[0], ".", (init_typing_namespace(), init_schema_map())],
         [ast.parse("from typing import foo").body[0], ".", (init_typing_namespace(), init_schema_map())],
         [ast.parse("from os import path").body[0], ".", (init_typing_namespace(), init_schema_map())],
     ],
-    ids=["any", "union", "else_typing", "else_no_typing"],
+    ids=["typing_any", "enum_enum", "typing_union", "else_typing", "else_enum", "else_no_typing_nor_enum"],
 )
 def test_process_import_from_external(ast_import_from, base_path, expected):
     type_namespace, schema_map = init_typing_namespace(), init_schema_map()
