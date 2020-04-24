@@ -10,7 +10,7 @@ from .conftest import assert_expected, TEST_TYPING_NAMESPACE
 
 
 @pytest.mark.parametrize(
-    "ast_element, typing_namespace, schema_map, expected",
+    "ast_element, type_namespace, schema_map, expected",
     [
         [ast.parse("None").body[0].value, TEST_TYPING_NAMESPACE, init_schema_map(), {"type": "null"}],
         [ast.parse("bool").body[0].value, TEST_TYPING_NAMESPACE, init_schema_map(), {"type": "boolean"}],
@@ -98,7 +98,7 @@ from .conftest import assert_expected, TEST_TYPING_NAMESPACE
         "unsupported",
     ],
 )
-def test_get_json_schema_from_ast_element(ast_element, typing_namespace, schema_map, expected):
+def test_get_json_schema_from_ast_element(ast_element, type_namespace, schema_map, expected):
     assert_expected(
-        functools.partial(get_json_schema_from_ast_element, ast_element, typing_namespace, schema_map), expected
+        functools.partial(get_json_schema_from_ast_element, ast_element, type_namespace, schema_map), expected
     )

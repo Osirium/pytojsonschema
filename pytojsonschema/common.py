@@ -8,10 +8,10 @@ BASE_SCHEMA_MAP = {
     "float": {"type": "number"},
     "str": {"type": "string"},
 }
-VALID_AST_SUBSCRIPTS = frozenset({"Union", "List", "Dict", "Optional"})
-VALID_TYPES = VALID_AST_SUBSCRIPTS | frozenset({"TypedDict", "Any"})
+VALID_TYPING_AST_SUBSCRIPT_TYPES = frozenset({"Union", "List", "Dict", "Optional"})
+VALID_TYPING_TYPES = VALID_TYPING_AST_SUBSCRIPT_TYPES | frozenset({"TypedDict", "Any"})
 
-TypingNamespace = typing.Dict[str, typing.Set[str]]
+TypeNamespace = typing.Dict[str, typing.Set[str]]
 Schema = typing.Dict[str, typing.Any]
 SchemaMap = typing.Dict[str, Schema]
 
@@ -20,14 +20,14 @@ class InvalidTypeAnnotation(Exception):
     pass
 
 
-def init_typing_namespace() -> TypingNamespace:
+def init_typing_namespace() -> TypeNamespace:
     """
     Initialize the typing namespace, whose keys are the supported typing types and the values how we can use them.
     Initial values are empty sets for all the typing types we support (keys)
 
-    :return: A TypingNamespace object
+    :return: A TypeNamespace object
     """
-    return {valid_type: set() for valid_type in VALID_TYPES}
+    return {valid_type: set() for valid_type in VALID_TYPING_TYPES}
 
 
 def init_schema_map() -> SchemaMap:

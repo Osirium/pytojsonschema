@@ -2,25 +2,25 @@ import ast
 import typing
 
 from .common import (
-    TypingNamespace,
+    TypeNamespace,
     SchemaMap,
     Schema,
     get_ast_name_or_attribute_string,
-    VALID_AST_SUBSCRIPTS,
+    VALID_TYPING_AST_SUBSCRIPT_TYPES,
     InvalidTypeAnnotation,
 )
 
 
 def get_json_schema_from_ast_element(
     ast_element: typing.Union[ast.Name, ast.Constant, ast.Attribute, ast.Subscript],
-    typing_namespace: TypingNamespace,
+    type_namespace: TypeNamespace,
     schema_map: SchemaMap,
 ) -> Schema:
     """
     Return the json schema from an type annotation ast object.
 
     :param ast_element: An ast name, constant, attribute or subscript element
-    :param typing_namespace: The current typing namespace to be read
+    :param type_namespace: The current typing namespace to be read
     :param schema_map: The current schema map to be read
     :return: A dictionary with the json schema
     """
@@ -40,19 +40,19 @@ def get_json_schema_from_ast_element(
     elif isinstance(ast_element, ast.Subscript):  # typing.List, typing.Dict, typing.Union and typing.Optional
         subscript_string = get_ast_name_or_attribute_string(ast_element.value)
         subscript_type = None
-        for key in VALID_AST_SUBSCRIPTS:
-            if subscript_string in typing_namespace.get(key, {}):
+        for key in VALID_TYPING_AST_SUBSCRIPT_TYPES:
+            if subscript_string in type_namespace.get(key, {}):
                 subscript_type = key
                 break
         if subscript_type is None:
             imported_types = []
-            for key in VALID_AST_SUBSCRIPTS:
-                for element in typing_namespace.get(key, {}):
+            for key in VALID_TYPING_AST_SUBSCRIPT_TYPES:
+                for element in type_namespace.get(key, {}):
                     imported_types.append(element)
             if imported_types:
                 error_msg = (
                     f"Type '{subscript_string}' is invalid. You have imported {', '.join(sorted(imported_types))}, and "
-                    f"we allow {', '.join(sorted(list(VALID_AST_SUBSCRIPTS)))}. Did you miss an import?"
+                    f"we allow {', '.join(sorted(list(VALID_TYPING_AST_SUBSCRIPT_TYPES)))}. Did you miss an import?"
                 )
             else:
                 error_msg = (
@@ -61,7 +61,7 @@ def get_json_schema_from_ast_element(
                 )
             raise InvalidTypeAnnotation(error_msg)
         if isinstance(ast_element.slice.value, (ast.Constant, ast.Name, ast.Subscript)):
-            inner_schema = get_json_schema_from_ast_element(ast_element.slice.value, typing_namespace, schema_map,)
+            inner_schema = get_json_schema_from_ast_element(ast_element.slice.value, type_namespace, schema_map,)
             if subscript_type == "List":
                 return {"type": "array", "items": inner_schema}
             elif subscript_type == "Optional":
@@ -78,13 +78,13 @@ def get_json_schema_from_ast_element(
                 return {
                     "type": "object",
                     "additionalProperties": get_json_schema_from_ast_element(
-                        ast_element.slice.value.elts[1], typing_namespace, schema_map
+                        ast_element.slice.value.elts[1], type_namespace, schema_map
                     ),
                 }
             else:  # Union
                 return {
                     "anyOf": [
-                        get_json_schema_from_ast_element(element, typing_namespace, schema_map)
+                        get_json_schema_from_ast_element(element, type_namespace, schema_map)
                         for element in ast_element.slice.value.elts
                     ]
                 }

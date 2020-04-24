@@ -12,7 +12,7 @@ from .conftest import assert_expected, TEST_TYPING_NAMESPACE
 
 
 @pytest.mark.parametrize(
-    "ast_function_def, typing_namespace, schema_map, expected",
+    "ast_function_def, type_namespace, schema_map, expected",
     [
         [
             ast.parse("def foo(a, /): pass").body[0],
@@ -85,8 +85,8 @@ from .conftest import assert_expected, TEST_TYPING_NAMESPACE
         "arg_no_default",
     ],
 )
-def test_process_function_def(ast_function_def, typing_namespace, schema_map, expected):
-    assert_expected(functools.partial(process_function_def, ast_function_def, typing_namespace, schema_map), expected)
+def test_process_function_def(ast_function_def, type_namespace, schema_map, expected):
+    assert_expected(functools.partial(process_function_def, ast_function_def, type_namespace, schema_map), expected)
 
 
 @pytest.mark.parametrize(

@@ -4,7 +4,7 @@ import logging
 import os
 import typing
 
-from .common import TypingNamespace, SchemaMap, Schema, init_typing_namespace, init_schema_map
+from .common import TypeNamespace, SchemaMap, Schema, init_typing_namespace, init_schema_map
 from .jsonschema import get_json_schema_from_ast_element, InvalidTypeAnnotation
 from .types import process_import, process_import_from, process_assign, process_class_def
 
@@ -13,13 +13,13 @@ LOGGER = logging.getLogger()
 
 
 def process_function_def(
-    ast_function_def: ast.FunctionDef, typing_namespace: TypingNamespace, schema_map: SchemaMap,
+    ast_function_def: ast.FunctionDef, type_namespace: TypeNamespace, schema_map: SchemaMap,
 ) -> Schema:
     """
     Process a function to return its json schema
 
     :param ast_function_def: An ast function def element
-    :param typing_namespace: The current typing namespace to be read
+    :param type_namespace: The current typing namespace to be read
     :param schema_map: The current schema map to be read
     :return: The json schema of the function
     """
@@ -45,7 +45,7 @@ def process_function_def(
                 f"Function '{ast_function_def.name}' is missing its **{ast_function_def.args.kwarg.arg} type annotation"
             )
         schema["additionalProperties"] = get_json_schema_from_ast_element(
-            ast_function_def.args.kwarg.annotation, typing_namespace, schema_map
+            ast_function_def.args.kwarg.annotation, type_namespace, schema_map
         )
     # Positional argument defaults is a non-padded list because you cannot have defaults before non-defaulted args
     # Keyword-only arguments, on the other side, can have defaults at random positions, and the default list is padded
@@ -60,7 +60,7 @@ def process_function_def(
                 f"Function '{ast_function_def.name}' is missing type annotation for the parameter '{argument.arg}'"
             )
         schema["properties"][argument.arg] = get_json_schema_from_ast_element(
-            argument.annotation, typing_namespace, schema_map
+            argument.annotation, type_namespace, schema_map
         )
         if default is None:
             schema["required"].append(argument.arg)
@@ -119,7 +119,7 @@ def process_file(
     with open(file_path) as f:
         ast_body = ast.parse(f.read()).body
     schema_map = init_schema_map()
-    typing_namespace = init_typing_namespace()
+    type_namespace = init_typing_namespace()
     function_schema_map = {}
 
     def _process_function(ast_function_def: ast.FunctionDef):
@@ -127,16 +127,16 @@ def process_file(
             LOGGER.info(f"Function {ast_function_def.name} skipped")
         else:
             function_schema_map[ast_function_def.name] = process_function_def(
-                ast_function_def, typing_namespace, schema_map
+                ast_function_def, type_namespace, schema_map
             )
 
     for node in ast_body:
         node_type = type(node)
         process_map = {
-            ast.Import: lambda: process_import(node, typing_namespace, schema_map),
-            ast.ImportFrom: lambda: process_import_from(node, os.path.dirname(file_path), typing_namespace, schema_map),
-            ast.Assign: lambda: process_assign(node, typing_namespace, schema_map),
-            ast.ClassDef: lambda: process_class_def(node, typing_namespace, schema_map),
+            ast.Import: lambda: process_import(node, type_namespace, schema_map),
+            ast.ImportFrom: lambda: process_import_from(node, os.path.dirname(file_path), type_namespace, schema_map),
+            ast.Assign: lambda: process_assign(node, type_namespace, schema_map),
+            ast.ClassDef: lambda: process_class_def(node, type_namespace, schema_map),
             ast.FunctionDef: lambda: _process_function(node),
         }
         if node_type in process_map:

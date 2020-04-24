@@ -70,14 +70,14 @@ def test_process_alias(alias_object, expected):
     ids=["typing", "no_typing"],
 )
 def test_process_import(ast_import, expected):
-    typing_namespace, schema_map = init_typing_namespace(), init_schema_map()
-    process_import(ast_import, typing_namespace, schema_map)
-    assert expected[0] == typing_namespace
+    type_namespace, schema_map = init_typing_namespace(), init_schema_map()
+    process_import(ast_import, type_namespace, schema_map)
+    assert expected[0] == type_namespace
     assert expected[1] == schema_map
 
 
 @pytest.mark.parametrize(
-    "ast_assign, typing_namespace, schema_map, expected",
+    "ast_assign, type_namespace, schema_map, expected",
     [
         [
             ast.parse("a = typing.Optional[str]").body[0],
@@ -89,13 +89,13 @@ def test_process_import(ast_import, expected):
     ],
     ids=["processed", "not_processed"],
 )
-def test_process_assign(ast_assign, typing_namespace, schema_map, expected):
-    process_assign(ast_assign, typing_namespace, schema_map)
+def test_process_assign(ast_assign, type_namespace, schema_map, expected):
+    process_assign(ast_assign, type_namespace, schema_map)
     assert expected == schema_map
 
 
 @pytest.mark.parametrize(
-    "ast_class_def, typing_namespace, schema_map, expected",
+    "ast_class_def, type_namespace, schema_map, expected",
     [
         [ast.parse("class Foo: pass").body[0], init_typing_namespace(), init_schema_map(), init_schema_map()],
         [
@@ -122,8 +122,8 @@ def test_process_assign(ast_assign, typing_namespace, schema_map, expected):
     ],
     ids=["not_typed_dict", "typed_dict"],
 )
-def test_process_class_def(ast_class_def, typing_namespace, schema_map, expected):
-    process_class_def(ast_class_def, typing_namespace, schema_map)
+def test_process_class_def(ast_class_def, type_namespace, schema_map, expected):
+    process_class_def(ast_class_def, type_namespace, schema_map)
     assert expected == schema_map
 
 
@@ -146,9 +146,9 @@ def test_process_class_def(ast_class_def, typing_namespace, schema_map, expected
     ids=["any", "union", "else_typing", "else_no_typing"],
 )
 def test_process_import_from_external(ast_import_from, base_path, expected):
-    typing_namespace, schema_map = init_typing_namespace(), init_schema_map()
-    process_import_from(ast_import_from, base_path, typing_namespace, schema_map)
-    assert expected[0] == typing_namespace
+    type_namespace, schema_map = init_typing_namespace(), init_schema_map()
+    process_import_from(ast_import_from, base_path, type_namespace, schema_map)
+    assert expected[0] == type_namespace
     assert expected[1] == schema_map
 
 
@@ -175,7 +175,7 @@ def test_process_import_from_local():
         with open(subpackage_baz, "w") as f:
             f.write("import typing\n\n\nD = typing.Dict[str, int]\n")
         # Tests
-        typing_namespace = init_typing_namespace()
+        type_namespace = init_typing_namespace()
         b_schema = {
             "type": "object",
             "properties": {"param": {"type": "integer"}},
@@ -190,7 +190,7 @@ def test_process_import_from_local():
         }
         with open(package_init) as f:
             schema_map = init_schema_map()
-            process_import_from(ast.parse(f.read()).body[1], package, typing_namespace, schema_map)
+            process_import_from(ast.parse(f.read()).body[1], package, type_namespace, schema_map)
             assert schema_map == {
                 "bool": {"type": "boolean"},
                 "int": {"type": "integer"},
@@ -201,7 +201,7 @@ def test_process_import_from_local():
         with open(subpackage_bar) as f:
             file_content = f.read()
             schema_map = init_schema_map()
-            process_import_from(ast.parse(file_content).body[0], subpackage, typing_namespace, schema_map)
+            process_import_from(ast.parse(file_content).body[0], subpackage, type_namespace, schema_map)
             assert schema_map == {
                 "bool": {"type": "boolean"},
                 "int": {"type": "integer"},
@@ -210,7 +210,7 @@ def test_process_import_from_local():
                 "A": a_schema,
             }
             schema_map = init_schema_map()
-            process_import_from(ast.parse(file_content).body[1], subpackage, typing_namespace, schema_map)
+            process_import_from(ast.parse(file_content).body[1], subpackage, type_namespace, schema_map)
             assert schema_map == {
                 "bool": {"type": "boolean"},
                 "int": {"type": "integer"},
@@ -219,7 +219,7 @@ def test_process_import_from_local():
                 "B": b_schema,
             }
             schema_map = init_schema_map()
-            process_import_from(ast.parse(file_content).body[2], subpackage, typing_namespace, schema_map)
+            process_import_from(ast.parse(file_content).body[2], subpackage, type_namespace, schema_map)
             assert schema_map == {
                 "bool": {"type": "boolean"},
                 "int": {"type": "integer"},
@@ -228,7 +228,7 @@ def test_process_import_from_local():
                 "C": {"anyOf": [{"type": "boolean"}, {"type": "number"}]},
             }
             schema_map = init_schema_map()
-            process_import_from(ast.parse(file_content).body[3], subpackage, typing_namespace, schema_map)
+            process_import_from(ast.parse(file_content).body[3], subpackage, type_namespace, schema_map)
             assert schema_map == {
                 "bool": {"type": "boolean"},
                 "int": {"type": "integer"},
@@ -237,7 +237,7 @@ def test_process_import_from_local():
                 "D": {"additionalProperties": {"type": "integer"}, "type": "object"},
             }
             schema_map = init_schema_map()
-            process_import_from(ast.parse(file_content).body[4], subpackage, typing_namespace, schema_map)
+            process_import_from(ast.parse(file_content).body[4], subpackage, type_namespace, schema_map)
             assert schema_map == {
                 "bool": {"type": "boolean"},
                 "int": {"type": "integer"},
