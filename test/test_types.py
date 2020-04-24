@@ -153,15 +153,7 @@ def test_process_assign(ast_assign, type_namespace, schema_map, expected):
             ).body[0],
             dict(init_typing_namespace(), **{"Enum": {"enum.Enum"}}),
             init_schema_map(),
-            dict(
-                init_schema_map(),
-                **{
-                    "Color": {
-                        "type": "string",
-                        "enum": ["red", "blue"]
-                    }
-                },
-            ),
+            dict(init_schema_map(), **{"Color": {"type": "string", "enum": ["red", "blue"]}},),
         ],
         [
             ast.parse(
