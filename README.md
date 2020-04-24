@@ -96,10 +96,12 @@ class Service(typing.TypedDict):
     port: ServicePort
     config: ServiceConfig
     tags: typing.List[str]
-    debug: bool
+    debug: bool = False
 ```
 
 Also, if you need to restrict the choices for a string type, you can use Python enums:
+
+_Note 1: Whilst Python itself will not auto-populate default values, you can use them to make the property not required_
 
 ```python
 import enum

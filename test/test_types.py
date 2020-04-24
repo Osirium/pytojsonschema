@@ -127,7 +127,7 @@ def test_process_assign(ast_assign, type_namespace, schema_map, expected):
             ast.parse(
                 """class Car(typing.TypedDict):
     '''Some docstring'''
-    model: str
+    model: str = "Ford"
     plate: str"""
             ).body[0],
             dict(init_typing_namespace(), **{"TypedDict": {"typing.TypedDict"}}),
@@ -138,7 +138,7 @@ def test_process_assign(ast_assign, type_namespace, schema_map, expected):
                     "Car": {
                         "additionalProperties": False,
                         "properties": {"model": {"type": "string"}, "plate": {"type": "string"}},
-                        "required": ["model", "plate"],
+                        "required": ["plate"],
                         "type": "object",
                     }
                 },

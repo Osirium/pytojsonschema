@@ -138,15 +138,18 @@ def process_class_def(
     if ast_class_def.bases:
         if get_ast_name_or_attribute_string(ast_class_def.bases[0]) in type_namespace.get("TypedDict", set()):
             properties = {}
+            required = []
             for index, node in enumerate(ast_class_def.body):
                 if isinstance(node, ast.AnnAssign):
                     properties[node.target.id] = get_json_schema_from_ast_element(
                         node.annotation, type_namespace, schema_map
                     )
+                    if node.value is None:
+                        required.append(node.target.id)
             schema_map[ast_class_def.name] = {
                 "type": "object",
                 "properties": properties,
-                "required": list(properties.keys()),
+                "required": required,
                 "additionalProperties": False,
             }
         elif get_ast_name_or_attribute_string(ast_class_def.bases[0]) in type_namespace.get("Enum", set()):
