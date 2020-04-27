@@ -5,6 +5,7 @@ import pytest
 
 from pytojsonschema.common import init_schema_map, InvalidTypeAnnotation
 from pytojsonschema.jsonschema import get_json_schema_from_ast_element
+from pytojsonschema.types import ANY_SCHEMA
 
 from .conftest import assert_expected, TEST_TYPING_NAMESPACE
 
@@ -53,6 +54,12 @@ from .conftest import assert_expected, TEST_TYPING_NAMESPACE
             {"anyOf": [{"type": "integer"}, {"type": "null"}]},
         ],
         [
+            ast.parse("typing.Optional[typing.Any]").body[0].value,
+            TEST_TYPING_NAMESPACE,
+            dict(init_schema_map(), **{"typing.Any": ANY_SCHEMA}),
+            {"anyOf": [ANY_SCHEMA, {"type": "null"}]},
+        ],
+        [
             ast.parse("typing.Union[str]").body[0].value,
             TEST_TYPING_NAMESPACE,
             init_schema_map(),
@@ -91,6 +98,7 @@ from .conftest import assert_expected, TEST_TYPING_NAMESPACE
         "subscript_missing_typing",
         "list",
         "optional",
+        "optional_any",
         "bad_union",
         "dict_bad_keys",
         "dict",

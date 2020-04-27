@@ -60,7 +60,7 @@ def get_json_schema_from_ast_element(
                     f"typing?"
                 )
             raise InvalidTypeAnnotation(error_msg)
-        if isinstance(ast_element.slice.value, (ast.Constant, ast.Name, ast.Subscript)):
+        if isinstance(ast_element.slice.value, (ast.Constant, ast.Name, ast.Attribute, ast.Subscript)):
             inner_schema = get_json_schema_from_ast_element(ast_element.slice.value, type_namespace, schema_map,)
             if subscript_type == "List":
                 return {"type": "array", "items": inner_schema}
