@@ -120,7 +120,7 @@ def my_func(http_method: HTTPMethod):
 
 _Note: All properties of the enum must be constants: `None`, `int`, `float`, `bool`, `str`._
 
-_Note: The resulting validation uses the different enum values, e.g. `HTTPMethod.GET.value` or simply `GET`, as the
+_Note: The resulting validation uses the different enum values, e.g. `HTTPMethod.GET.value` or simply `"GET"`, as the
 valid choices and not the enum instance itself, e.g. `HTTPMethod.GET`, as that is what JSON schema can understand. This
 can lead to some incompatibilities with other static analysis tools like [http://mypy-lang.org/](http://mypy-lang.org/),
 so bear that in mind._
