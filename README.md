@@ -99,9 +99,9 @@ class Service(typing.TypedDict):
     debug: bool = False
 ```
 
-Also, if you need to restrict the choices for a string type, you can use Python enums:
+_Note: Whilst Python itself will not auto-populate default values, you can use them to make the property not required._
 
-_Note 1: Whilst Python itself will not auto-populate default values, you can use them to make the property not required_
+Also, if you need to restrict the choices for a type, you can use Python enums:
 
 ```python
 import enum
@@ -118,9 +118,12 @@ def my_func(http_method: HTTPMethod):
     pass  # My code
 ```
 
-_Note 1: This only works for enums whose values are strings, as that is the only case JSON schema supports_
+_Note: All properties of the enum must be constants: `None`, `int`, `float`, `bool`, `str`._
 
-_Note 2: The resulting validation uses the enum values as the valid choices, as that is what JSON schema can understand_
+_Note: The resulting validation uses the different enum values, e.g. `HTTPMethod.GET.value` or simply `GET`, as the
+valid choices and not the enum instance itself, e.g. `HTTPMethod.GET`, as that is what JSON schema can understand. This
+can lead to some incompatibilities with other static analysis tools like [http://mypy-lang.org/](http://mypy-lang.org/),
+so bear that in mind._
 
 ##### Importing types from other files
 

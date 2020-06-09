@@ -156,12 +156,13 @@ def process_class_def(
             choices = []
             for index, node in enumerate(ast_class_def.body):
                 if isinstance(node, ast.Assign):
-                    if not isinstance(node.value, ast.Constant) or not isinstance(node.value.value, str):
-                        return  # All properties of the enum must be strings
+                    if not isinstance(node.value, ast.Constant) or (
+                        not isinstance(node.value.value, (str, int, float, bool)) and node.value.value is not None
+                    ):
+                        return  # All properties of the enum must be constants: None, int, float, bool, str
                     else:
                         choices.append(node.value.value)
             schema_map[ast_class_def.name] = {
-                "type": "string",
                 "enum": choices,
             }
 
