@@ -2,6 +2,7 @@ import ast
 import fnmatch
 import logging
 import os
+import pkgutil
 import typing
 
 from .common import TypeNamespace, SchemaMap, Schema, init_typing_namespace, init_schema_map
@@ -148,6 +149,7 @@ def package_iterator(
     package_path: str,
     include_patterns: typing.Optional[typing.List[str]] = None,
     exclude_patterns: typing.Optional[typing.List[str]] = None,
+    import_prefix: typing.Optional[str] = None,
 ) -> typing.Generator[typing.Tuple[str, str], None, None]:
     """
     Recursively process a package source folder and return the import path prefix and the module file path.
@@ -158,24 +160,35 @@ def package_iterator(
     :param package_path: The path to the your python package
     :param include_patterns: A list of wildcard patterns to match the function names you want to include
     :param exclude_patterns: A list of wildcard patterns to match the function names you want to exclude
+    :param import_prefix: A prefix to be added to the import path
     :yield: A tuple containing the module import path and the module file path
     """
-    norm_package_path = os.path.normpath(package_path)
-    path_prefix = os.path.split(norm_package_path)[0]
-    for root, _, files in os.walk(norm_package_path, topdown=True):
-        for file in files:
-            if file.endswith(".py"):
-                package_chain = root.replace(path_prefix, "", 1)
-                if package_chain.startswith("/"):
-                    package_chain = package_chain.replace("/", "", 1)
-                package_chain = package_chain.replace(os.path.sep, ".")
-                if file != "__init__.py":
-                    package_chain = f"{package_chain}.{os.path.splitext(file)[0]}"
-                    if not filter_by_patterns(file, include_patterns, exclude_patterns):
-                        LOGGER.info(f"Module {package_chain} skipped")
-                        continue
-                LOGGER.info(f"Module {package_chain}")
-                yield package_chain, os.path.join(root, file)
+    package_path = os.path.normpath(package_path)
+    package_name = os.path.basename(package_path)
+    if import_prefix is None:
+        import_path = package_name
+    else:
+        import_path = f"{import_prefix}.{package_name}"
+    yield import_path, os.path.join(package_path, "__init__.py")
+    for child_module in pkgutil.iter_modules([package_path]):
+        if not filter_by_patterns(child_module.name, include_patterns, exclude_patterns):
+            LOGGER.info(f"Module {package_name}.{child_module.name} skipped")
+            continue
+        if not child_module.ispkg:
+            if import_prefix is None:
+                import_path = f"{package_name}.{child_module.name}"
+            else:
+                import_path = f"{import_prefix}.{package_name}.{child_module.name}"
+            yield import_path, os.path.join(package_path, f"{child_module.name}.py")
+        else:
+            if import_prefix is None:
+                new_prefix = package_name
+            else:
+                new_prefix = f"{import_prefix}.{package_name}"
+            for inner_import_path, inner_module_math in package_iterator(
+                os.path.join(package_path, child_module.name), include_patterns, exclude_patterns, new_prefix
+            ):
+                yield inner_import_path, inner_module_math
 
 
 def process_package(

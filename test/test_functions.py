@@ -137,7 +137,21 @@ def test_process_package():
             "properties": {},
             "required": [],
             "type": "object",
-        }
+        },
+        "example.config.dev.common.get_config": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": False,
+            "properties": {},
+            "required": [],
+            "type": "object",
+        },
+        "example.config.prod.common.get_config": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": False,
+            "properties": {},
+            "required": [],
+            "type": "object",
+        },
     }
     expected = {
         "example.service.start": {
