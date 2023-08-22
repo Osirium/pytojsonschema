@@ -60,8 +60,13 @@ def get_json_schema_from_ast_element(
                     f"typing?"
                 )
             raise InvalidTypeAnnotation(error_msg)
-        if isinstance(ast_element.slice.value, (ast.Constant, ast.Name, ast.Attribute, ast.Subscript)):
-            inner_schema = get_json_schema_from_ast_element(ast_element.slice.value, type_namespace, schema_map,)
+        # In python 3.10 ast_element.slice.value has become ast_element.slice
+        # 
+        # example slice: <ast.Tuple object at 0xffffa90aa590>
+        # example ctx field value: <ast.Load object at 0xffffb546b0d0>
+        # example elts field value: [<ast.Name object at 0xffffb50ae560>, <ast.Name object at 0xffffb50ae530>]
+        if isinstance(ast_element.slice, (ast.Constant, ast.Name, ast.Attribute, ast.Subscript)):
+            inner_schema = get_json_schema_from_ast_element(ast_element.slice, type_namespace, schema_map,)
             if subscript_type == "List":
                 return {"type": "array", "items": inner_schema}
             elif subscript_type == "Optional":
@@ -71,21 +76,21 @@ def get_json_schema_from_ast_element(
         else:  # ast.Tuple
             if subscript_type == "Dict":
                 if not (
-                    isinstance(ast_element.slice.value.elts[0], ast.Name)
-                    and ast_element.slice.value.elts[0].id == "str"
+                    isinstance(ast_element.slice.elts[0], ast.Name)
+                    and ast_element.slice.elts[0].id == "str"
                 ):
                     raise InvalidTypeAnnotation("typing.Dict keys must be strings")
                 return {
                     "type": "object",
                     "additionalProperties": get_json_schema_from_ast_element(
-                        ast_element.slice.value.elts[1], type_namespace, schema_map
+                        ast_element.slice.elts[1], type_namespace, schema_map
                     ),
                 }
             else:  # Union
                 return {
                     "anyOf": [
                         get_json_schema_from_ast_element(element, type_namespace, schema_map)
-                        for element in ast_element.slice.value.elts
+                        for element in ast_element.slice.elts
                     ]
                 }
     else:
