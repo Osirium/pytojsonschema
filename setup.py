@@ -16,7 +16,7 @@ setup(
     description="A package to convert Python type annotations into JSON schemas",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
-    version="2.0.0-dev6",
+    version="2.0.0-dev7",
     author="Osirium",
     author_email="support@osirium.com",
     maintainer="Carlos Ruiz Lantero",
@@ -28,6 +28,7 @@ setup(
         "Programming Language :: Python",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
+    install_requires=["packaging==23.1"],
     tests_require=TEST_DEPENDENCIES,
     extras_require={"test": TEST_DEPENDENCIES},
 )
