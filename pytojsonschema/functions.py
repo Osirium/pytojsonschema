@@ -14,7 +14,9 @@ LOGGER = logging.getLogger()
 
 
 def process_function_def(
-    ast_function_def: ast.FunctionDef, type_namespace: TypeNamespace, schema_map: SchemaMap,
+    ast_function_def: ast.FunctionDef,
+    type_namespace: TypeNamespace,
+    schema_map: SchemaMap,
 ) -> Schema:
     """
     Process a function to return its json schema
