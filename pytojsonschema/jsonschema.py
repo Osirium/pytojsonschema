@@ -69,15 +69,12 @@ def get_json_schema_from_ast_element(
             raise InvalidTypeAnnotation(error_msg)
 
         # In python 3.10 ast_element.slice.value has become ast_element.slice
-        # 
+        #
         # example slice: <ast.Tuple object at 0xffffa90aa590>
         # example ctx field value: <ast.Load object at 0xffffb546b0d0>
         # example elts field value: [<ast.Name object at 0xffffb50ae560>, <ast.Name object at 0xffffb50ae530>]
         slice_object = ast_element.slice.value if PRE_3_10 else ast_element.slice
-        if isinstance(
-            slice_object,
-            (ast.Constant, ast.Name, ast.Attribute, ast.Subscript)
-        ):
+        if isinstance(slice_object, (ast.Constant, ast.Name, ast.Attribute, ast.Subscript)):
             inner_schema = get_json_schema_from_ast_element(slice_object, type_namespace, schema_map)
             if subscript_type == "List":
                 return {"type": "array", "items": inner_schema}
@@ -87,10 +84,7 @@ def get_json_schema_from_ast_element(
                 raise InvalidTypeAnnotation(f"{subscript_type} cannot have a single element")
         else:  # ast.Tuple
             if subscript_type == "Dict":
-                if not (
-                    isinstance(slice_object.elts[0], ast.Name)
-                    and slice_object.elts[0].id == "str"
-                ):
+                if not (isinstance(slice_object.elts[0], ast.Name) and slice_object.elts[0].id == "str"):
                     raise InvalidTypeAnnotation("typing.Dict keys must be strings")
                 return {
                     "type": "object",
