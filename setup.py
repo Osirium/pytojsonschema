@@ -2,7 +2,7 @@ import os
 from setuptools import setup
 
 TEST_DEPENDENCIES = [
-    "black==23.7.0",
+    "black==24.3.0",
     "flake8==3.7.9",
     "pytest==7.4.0",
     "pytest-cov==4.1.0",
